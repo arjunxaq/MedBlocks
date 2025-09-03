@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Synthetic Data Viewer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
+      background-size: 200% 200%;
+      animation: subtleShift 20s ease infinite;
+    }
+    @keyframes subtleShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .hourglass {
+      width: 40px; height: 40px;
+      border: 4px solid #10b981;
+      border-radius: 50%; border-top-color: transparent;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+    }
+    .modern-table { background: rgba(255, 255, 255, 0.95); border-radius: 12px; overflow: hidden; }
+    .table-header { background: linear-gradient(135deg, #10b981, #34d399); color: white; }
+    .status-success { color: #10b981; }
+  </style>
+</head>
+<body class="bg-black text-white p-8">
+  <h1 class="text-3xl font-bold mb-6">Synthetic Data</h1>
+  
+  <div id="loading" class="glass-card p-6 mb-6">
+    <div class="flex items-center gap-3">
+      <div class="hourglass"></div>
+      <p id="status" class="text-lg">⏳ Generating synthetic data...</p>
+    </div>
+  </div>
+
+  <div id="downloadContainer" class="hidden mb-6">
+    <button id="downloadBtn" class="bg-green-500 hover:bg-green-400 text-black font-semibold px-6 py-3 rounded-lg">
+      ⬇️ Download CSV
+    </button>
+  </div>
+
+  <div class="modern-table mb-6 hidden" id="tableContainer">
+    <table id="dataTable" class="table-auto w-full text-black"></table>
+  </div>
+
+  <!-- History Table -->
+  <h2 class="text-2xl font-semibold mt-10 mb-4">Model Version History</h2>
+  <div class="modern-table hidden" id="historyContainer">
+    <table id="historyTable" class="table-auto w-full text-black"></table>
+  </div>
+
+  <script>
+    let syntheticData = [];
+
+    async function fetchSyntheticData() {
+      try {
+        const response = await fetch('/get_synthetic_data');
+        if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        syntheticData = data;
+        renderTable(data, "dataTable");
+        document.getElementById("status").textContent = "✅ Synthetic data loaded!";
+        document.getElementById("status").classList.add("status-success");
+
+        setTimeout(() => {
+          document.getElementById("loading").classList.add("hidden");
+          document.getElementById("tableContainer").classList.remove("hidden");
+          document.getElementById("downloadContainer").classList.remove("hidden");
+          fetchModelHistory();
+        }, 800);
+        
+      } catch {
+        setTimeout(fetchSyntheticData, 2000);
+      }
+    }
+
+    async function loadData() {
+      await fetch('/generate');
+      fetchSyntheticData();
+    }
+
+    function renderTable(data, tableId) {
+      const table = document.getElementById(tableId);
+      table.innerHTML = "";
+
+      if (!data.length) {
+        table.innerHTML = "<tr><td class='text-center p-8 text-gray-500'>No data available</td></tr>";
+        return;
+      }
+
+      const headers = Object.keys(data[0]);
+      const headerRow = document.createElement("tr");
+      headers.forEach(h => {
+        const th = document.createElement("th");
+        th.className = "table-header px-4 py-3 text-left";
+        th.textContent = h;
+        headerRow.appendChild(th);
+      });
+      table.appendChild(headerRow);
+
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        headers.forEach(h => {
+          const td = document.createElement("td");
+          td.className = "px-4 py-3 border-b border-gray-200";
+          td.textContent = row[h];
+          tr.appendChild(td);
+        });
+        table.appendChild(tr);
+      });
+    }
+
+    async function fetchModelHistory() {
+      const response = await fetch('/get_model_history');
+      const history = await response.json();
+      if (!history.length) return;
+
+      const table = document.getElementById("historyTable");
+      table.innerHTML = `
+        <tr>
+          <th class="table-header px-4 py-3">Hospital</th>
+          <th class="table-header px-4 py-3">Version</th>
+          <th class="table-header px-4 py-3">Model Hash</th>
+          <th class="table-header px-4 py-3">Stats Hash</th>
+        </tr>`;
+
+      history.forEach(h => {
+        h.models.forEach(m => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="px-4 py-3 border-b border-gray-200">${h.hospital}</td>
+            <td class="px-4 py-3 border-b border-gray-200">${m.version}</td>
+            <td class="px-4 py-3 border-b border-gray-200">${m.modelHash}</td>
+            <td class="px-4 py-3 border-b border-gray-200">${m.statsHash}</td>
+          `;
+          table.appendChild(tr);
+        });
+      });
+
+      document.getElementById("historyContainer").classList.remove("hidden");
+    }
+
+    function downloadCSV() {
+      if (!syntheticData.length) return alert("No data to download!");
+      const headers = Object.keys(syntheticData[0]);
+      const rows = syntheticData.map(row => headers.map(h => `"${row[h]}"`).join(","));
+      const csvContent = [headers.join(","), ...rows].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "synthetic_data.csv");
+      link.click();
+    }
+
+    document.getElementById("downloadBtn").addEventListener("click", downloadCSV);
+
+    window.onload = loadData;
+  </script>
+</body>
+</html>

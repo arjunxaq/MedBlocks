@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MedBlock Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    .bg-pattern {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.1;
+      background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.15) 1px, transparent 0);
+      background-size: 50px 50px;
+      animation: float 20s ease-in-out infinite;
+      z-index: -1;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 2.5rem;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+      transition: all 0.4s ease;
+    }
+    
+    .glass-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 35px 80px rgba(0, 0, 0, 0.3);
+      border-color: rgba(57, 255, 20, 0.3);
+    }
+    
+    .neon-btn {
+      position: relative;
+      background: linear-gradient(135deg, #39ff14, #00ff88);
+      color: #000;
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      overflow: hidden;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .neon-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      transition: left 0.5s ease;
+    }
+    
+    .neon-btn:hover::before {
+      left: 100%;
+    }
+    
+    .neon-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 15px 40px rgba(57, 255, 20, 0.4);
+    }
+    
+    .neon-btn:active {
+      transform: scale(0.98);
+    }
+    
+    .neon-btn.loading {
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(0, 0, 0, 0.3);
+      border-top: 2px solid #000;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      display: none;
+      margin-right: 8px;
+    }
+    
+    .loading .spinner {
+      display: inline-block;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .input-field {
+      width: 100%;
+      padding: 1rem 1.5rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+    
+    .input-field::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .input-field:focus {
+      outline: none;
+      border-color: #39ff14;
+      box-shadow: 0 0 20px rgba(57, 255, 20, 0.3);
+      background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .file-input {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      width: 100%;
+    }
+    
+    .file-input input[type="file"] {
+      position: absolute;
+      left: -9999px;
+    }
+    
+    .file-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px dashed rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+    
+    .file-label:hover {
+      border-color: #39ff14;
+      background: rgba(57, 255, 20, 0.1);
+    }
+    
+    .hash-display {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-left: 4px solid #39ff14;
+      animation: slideIn 0.5s ease;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    .pulse-dot {
+      width: 12px;
+      height: 12px;
+      background: #39ff14;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+      margin-right: 8px;
+    }
+    
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(57, 255, 20, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(57, 255, 20, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(57, 255, 20, 0);
+      }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.6s ease forwards;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .copy-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+    }
+    
+    .copy-btn:hover {
+      background: #39ff14;
+      color: #000;
+      transform: scale(1.05);
+    }
+    
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      margin: 2rem 0;
+    }
+    
+    .step {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      margin-right: 1rem;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    
+    .step.active {
+      background: #39ff14;
+      color: #000;
+      transform: scale(1.1);
+    }
+    
+    .step.completed {
+      background: #39ff14;
+      color: #000;
+    }
+    
+    .hero-text {
+      background: linear-gradient(135deg, #39ff14, #00ff88, #39ff14);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradient 3s ease infinite;
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-pattern"></div>
+  
+  
+  <div class="min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="hero-text">
+      <h1 class="text-xl font-bold mb-1">MedBlock</h1>
+      <p class="text-xl font-light opacity-80">Decentralized Medical AI Platform</p>
+    </div>
+
+    <!-- Step Indicator -->
+    <div class="step-indicator mb-8">
+      <div class="step active" id="step1">1</div>
+      <div class="w-16 h-1 bg-white opacity-20 mx-2"></div>
+      <div class="step" id="step2">2</div>
+      <div class="w-16 h-1 bg-white opacity-20 mx-2"></div>
+      <div class="step" id="step3">3</div>
+    </div>
+
+    <!-- Main Content Container -->
+    <div class="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-2 gap-8">
+      
+      <!-- Train Model Card -->
+      <div class="glass-card fade-in">
+        <div class="flex items-center mb-6">
+          <div class="pulse-dot"></div>
+          <h2 class="text-2xl font-semibold">Train GAN Model</h2>
+        </div>
+        <p class="text-gray-300 mb-6 leading-relaxed">
+          Launch your AI training environment in Google Colab. Our pre-configured notebook 
+          includes all dependencies and optimization settings.
+        </p>
+        <a href="https://colab.research.google.com/drive/1-eud5uhYteRPsqAlZ8qrz3O4aYJLNxsD#scrollTo=An5_xC1MSyYT" 
+           target="_blank" 
+           class="neon-btn w-full block text-center">
+          <span class="spinner"></span>
+          Launch Training Environment
+        </a>
+      </div>
+
+      <!-- Upload Card -->
+      <div class="glass-card fade-in" style="animation-delay: 0.2s;">
+        <div class="flex items-center mb-6">
+          <div class="pulse-dot"></div>
+          <h2 class="text-2xl font-semibold">Deploy Model</h2>
+        </div>
+
+        <!-- Organization Name -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-3 text-gray-300">Organization Name</label>
+          <input id="orgName" type="text" class="input-field" placeholder="Enter your organization name">
+        </div>
+
+        <!-- Model File Upload -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-3 text-gray-300">Model File (.pth)</label>
+          <div class="file-input">
+            <input id="modelFile" type="file" accept=".pth" />
+            <label for="modelFile" class="file-label">
+              <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+              </svg>
+              <span id="modelFileName">Select Model File</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- JSON File Upload -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-3 text-gray-300">Statistics File (.json)</label>
+          <div class="file-input">
+            <input id="jsonFile" type="file" accept=".json" />
+            <label for="jsonFile" class="file-label">
+              <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              <span id="jsonFileName">Select Statistics File</span>
+            </label>
+          </div>
+        </div>
+
+        <button id="uploadBtn" class="neon-btn w-full mb-4">
+          <span class="spinner"></span>
+          Upload to IPFS Network
+        </button>
+      </div>
+    </div>
+
+    <!-- Hash Display Section -->
+    <div id="hashSection" class="w-full max-w-4xl mt-8 hidden">
+      <div class="glass-card fade-in">
+        <div class="flex items-center mb-6">
+          <div class="pulse-dot"></div>
+          <h2 class="text-2xl font-semibold">IPFS Deployment Results</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <!-- Model Hash -->
+          <div class="hash-display">
+            <p class="text-sm font-medium mb-2 text-gray-300">Model Hash</p>
+            <div class="flex items-center gap-3">
+              <input id="modelHash" class="input-field flex-1 font-mono text-sm" readonly>
+              <button data-copy="modelHash" class="copy-btn copyBtn">Copy</button>
+            </div>
+          </div>
+
+          <!-- JSON Hash -->
+          <div class="hash-display">
+            <p class="text-sm font-medium mb-2 text-gray-300">Statistics Hash</p>
+            <div class="flex items-center gap-3">
+              <input id="jsonHash" class="input-field flex-1 font-mono text-sm" readonly>
+              <button data-copy="jsonHash" class="copy-btn copyBtn">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-4">
+          <button id="blockchainBtn" class="neon-btn flex-1">
+            <span class="spinner"></span>
+            Deploy to Blockchain
+          </button>
+          <button id="queryBtn" class="neon-btn flex-1 hidden">
+            <span class="spinner"></span>
+            Generate Synthetic Data
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PINATA_API_KEY = "5a242bbe0973170187b0";
+    const PINATA_SECRET_API_KEY = "fa8fcac76b919e16f5b8285c40d8b6e06f424f17d6b9d0946eb517a3ccd57ed7";
+
+    const CONTRACT_ADDRESS = "0x41C53BBC067c907BC52147D233dC8541f36FEE0B";
+    const CONTRACT_ABI = [
+      {
+        "anonymous": false,
+        "inputs": [
+          { "indexed": true, "internalType": "address", "name": "uploader", "type": "address" },
+          { "indexed": false, "internalType": "string", "name": "modelHash", "type": "string" },
+          { "indexed": false, "internalType": "string", "name": "statsHash", "type": "string" }
+        ],
+        "name": "ModelUploaded",
+        "type": "event"
+      },
+      {
+        "inputs": [
+          { "internalType": "string", "name": "_modelHash", "type": "string" },
+          { "internalType": "string", "name": "_statsHash", "type": "string" }
+        ],
+        "name": "uploadModelData",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getAllHospitals",
+        "outputs": [{ "internalType": "address[]", "name": "", "type": "address[]" }],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [{ "internalType": "address", "name": "_hospital", "type": "address" }],
+        "name": "getLatestModelData",
+        "outputs": [
+          {
+            "components": [
+              { "internalType": "string", "name": "modelHash", "type": "string" },
+              { "internalType": "string", "name": "statsHash", "type": "string" }
+            ],
+            "internalType": "struct HospitalModelRegistry.ModelInfo",
+            "name": "",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [{ "internalType": "address", "name": "_hospital", "type": "address" }],
+        "name": "getModelData",
+        "outputs": [
+          {
+            "components": [
+              { "internalType": "string", "name": "modelHash", "type": "string" },
+              { "internalType": "string", "name": "statsHash", "type": "string" }
+            ],
+            "internalType": "struct HospitalModelRegistry.ModelInfo[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ];
+
+    // DOM Elements
+    const uploadBtn = document.getElementById("uploadBtn");
+    const blockchainBtn = document.getElementById("blockchainBtn");
+    const queryBtn = document.getElementById("queryBtn");
+    const hashSection = document.getElementById("hashSection");
+    const modelHashInput = document.getElementById("modelHash");
+    const jsonHashInput = document.getElementById("jsonHash");
+    const modelFileInput = document.getElementById("modelFile");
+    const jsonFileInput = document.getElementById("jsonFile");
+    const step1 = document.getElementById("step1");
+    const step2 = document.getElementById("step2");
+    const step3 = document.getElementById("step3");
+
+    // File input handlers
+    modelFileInput.addEventListener('change', function(e) {
+      const fileName = e.target.files[0]?.name || 'Select Model File';
+      document.getElementById('modelFileName').textContent = fileName;
+    });
+
+    jsonFileInput.addEventListener('change', function(e) {
+      const fileName = e.target.files[0]?.name || 'Select Statistics File';
+      document.getElementById('jsonFileName').textContent = fileName;
+    });
+
+    // Loading animation helper
+    function setLoading(button, isLoading) {
+      if (isLoading) {
+        button.classList.add('loading');
+        button.disabled = true;
+      } else {
+        button.classList.remove('loading');
+        button.disabled = false;
+      }
+    }
+
+    // Update step indicator
+    function updateStep(stepNumber) {
+      [step1, step2, step3].forEach((step, index) => {
+        if (index < stepNumber - 1) {
+          step.classList.add('completed');
+          step.classList.remove('active');
+        } else if (index === stepNumber - 1) {
+          step.classList.add('active');
+          step.classList.remove('completed');
+        } else {
+          step.classList.remove('active', 'completed');
+        }
+      });
+    }
+
+    async function uploadToPinata(file) {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+        method: "POST",
+        headers: {
+          pinata_api_key: PINATA_API_KEY,
+          pinata_secret_api_key: PINATA_SECRET_API_KEY
+        },
+        body: formData
+      });
+
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      return data.IpfsHash;
+    }
+
+    uploadBtn.addEventListener("click", async () => {
+      const modelFile = modelFileInput.files[0];
+      const jsonFile = jsonFileInput.files[0];
+
+      if (!modelFile || !jsonFile) {
+        alert("Please select both .pth and .json files.");
+        return;
+      }
+
+      setLoading(uploadBtn, true);
+      
+      try {
+        const [modelHash, jsonHash] = await Promise.all([
+          uploadToPinata(modelFile),
+          uploadToPinata(jsonFile)
+        ]);
+
+        modelHashInput.value = modelHash;
+        jsonHashInput.value = jsonHash;
+        
+        hashSection.classList.remove("hidden");
+        updateStep(2);
+        
+        // Smooth scroll to hash section
+        hashSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+      } catch (err) {
+        alert("Upload error: " + err.message);
+      } finally {
+        setLoading(uploadBtn, false);
+      }
+    });
+
+    // Copy button functionality
+    document.querySelectorAll(".copyBtn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const target = document.getElementById(btn.dataset.copy);
+        try {
+          await navigator.clipboard.writeText(target.value);
+          
+          // Visual feedback
+          const originalText = btn.textContent;
+          btn.textContent = "Copied!";
+          btn.style.background = "#39ff14";
+          btn.style.color = "#000";
+          
+          setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.background = "";
+            btn.style.color = "";
+          }, 2000);
+          
+        } catch (err) {
+          alert("Copy failed!");
+        }
+      });
+    });
+
+    blockchainBtn.addEventListener("click", async () => {
+      if (!window.ethereum) {
+        alert("MetaMask not detected! Please install MetaMask.");
+        return;
+      }
+      
+      const orgName = document.getElementById("orgName").value.trim();
+      if (!orgName) {
+        alert("Please enter organization name.");
+        return;
+      }
+
+      const modelHash = modelHashInput.value;
+      const jsonHash = jsonHashInput.value;
+      if (!modelHash || !jsonHash) {
+        alert("Upload files first.");
+        return;
+      }
+
+      setLoading(blockchainBtn, true);
+
+      try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        const signer = provider.getSigner();
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+        const tx = await contract.uploadModelData(modelHash, jsonHash);
+        await tx.wait();
+        
+        alert("✅ Successfully deployed to blockchain!");
+        updateStep(3);
+        
+        queryBtn.classList.remove("hidden");
+        queryBtn.addEventListener("click", () => {
+          // Replace with your actual query route
+          window.location.href = "/query"; // or "{{ url_for('query') }}"
+        });
+        
+      } catch (err) {
+        alert("Transaction failed: " + err.message);
+      } finally {
+        setLoading(blockchainBtn, false);
+      }
+    });
+
+    // Initialize
+    updateStep(1);
+  </script>
+</body>
+</html>

@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Connect Wallet | MedBlock</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #050505;
+      color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Animated background particles */
+    .particles {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(0, 183, 255, 0.3);
+      border-radius: 50%;
+      animation: particle-float 20s linear infinite;
+    }
+
+    .particle:nth-child(2n) {
+      width: 1px;
+      height: 1px;
+      background: rgba(0, 183, 255, 0.2);
+      animation-duration: 25s;
+    }
+
+    .particle:nth-child(3n) {
+      background: rgba(0, 183, 255, 0.1);
+      animation-duration: 30s;
+    }
+
+    @keyframes particle-float {
+      0% {
+        transform: translateY(100vh) translateX(-50px);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-100px) translateX(50px);
+        opacity: 0;
+      }
+    }
+
+    /* Gradient overlay */
+    .gradient-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, rgba(0, 183, 255, 0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    header {
+      position: absolute;
+      top: 30px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0 2rem;
+      z-index: 10;
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #00b7ff;
+      letter-spacing: 2px;
+      position: relative;
+      animation: logo-glow 3s ease-in-out infinite alternate;
+    }
+
+    .logo::after {
+      content: '';
+      position: absolute;
+      bottom: -3px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #00b7ff, transparent);
+      animation: logo-underline 2s ease-in-out infinite;
+    }
+
+    @keyframes logo-glow {
+      0% { text-shadow: 0 0 5px rgba(0, 183, 255, 0.3); }
+      100% { text-shadow: 0 0 20px rgba(0, 183, 255, 0.6), 0 0 30px rgba(0, 183, 255, 0.3); }
+    }
+
+    @keyframes logo-underline {
+      0%, 100% { transform: scaleX(0); }
+      50% { transform: scaleX(1); }
+    }
+
+    .container {
+      text-align: center;
+      background: linear-gradient(145deg, #0d0d0d, #151515);
+      padding: 3.5rem 3rem;
+      border-radius: 1.5rem;
+      box-shadow: 
+        0 0 40px rgba(0, 183, 255, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      width: 420px;
+      border: 1px solid rgba(0, 183, 255, 0.2);
+      position: relative;
+      backdrop-filter: blur(10px);
+      animation: container-entrance 1s ease-out;
+    }
+
+    @keyframes container-entrance {
+      0% {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .container::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #00b7ff, transparent, #00b7ff);
+      border-radius: 1.5rem;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .container:hover::before {
+      opacity: 0.5;
+      animation: border-glow 2s linear infinite;
+    }
+
+    @keyframes border-glow {
+      0% { background: linear-gradient(45deg, #00b7ff, transparent, #00b7ff); }
+      25% { background: linear-gradient(135deg, #00b7ff, transparent, #00b7ff); }
+      50% { background: linear-gradient(225deg, #00b7ff, transparent, #00b7ff); }
+      75% { background: linear-gradient(315deg, #00b7ff, transparent, #00b7ff); }
+      100% { background: linear-gradient(45deg, #00b7ff, transparent, #00b7ff); }
+    }
+
+    .container:hover {
+      transform: translateY(-8px);
+      box-shadow: 
+        0 20px 60px rgba(0, 183, 255, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .wallet-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 1.5rem;
+      background: linear-gradient(135deg, #00b7ff, #0088cc);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      animation: icon-pulse 2s ease-in-out infinite;
+      position: relative;
+    }
+
+    .wallet-icon::before {
+      content: '👛';
+      filter: brightness(0) invert(1);
+    }
+
+    .wallet-icon::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      background: linear-gradient(135deg, #00b7ff, #0088cc);
+      border-radius: 20px;
+      z-index: -1;
+      opacity: 0.3;
+      animation: icon-ring 3s ease-in-out infinite;
+    }
+
+    @keyframes icon-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    @keyframes icon-ring {
+      0%, 100% { 
+        transform: scale(1);
+        opacity: 0.3;
+      }
+      50% { 
+        transform: scale(1.2);
+        opacity: 0.1;
+      }
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #00b7ff, #ffffff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: title-shimmer 3s ease-in-out infinite;
+    }
+
+    @keyframes title-shimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    p {
+      font-size: 1.1rem;
+      color: #b0b0b0;
+      margin-bottom: 2.5rem;
+      line-height: 1.6;
+      font-weight: 400;
+    }
+
+    button {
+      background: linear-gradient(135deg, #00b7ff, #0088cc);
+      color: #ffffff;
+      border: none;
+      padding: 1rem 2.5rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 1.2rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 20px rgba(0, 183, 255, 0.3);
+    }
+
+    button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.6s ease;
+    }
+
+    button:hover::before {
+      left: 100%;
+    }
+
+    button:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 
+        0 8px 30px rgba(0, 183, 255, 0.4),
+        0 0 0 1px rgba(0, 183, 255, 0.3);
+    }
+
+    button:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .status {
+      margin-top: 2rem;
+      font-size: 1rem;
+      font-weight: 500;
+      padding: 0.8rem 1.5rem;
+      border-radius: 0.8rem;
+      background: rgba(0, 183, 255, 0.1);
+      border: 1px solid rgba(0, 183, 255, 0.2);
+      transition: all 0.3s ease;
+      animation: status-fade-in 0.5s ease-out;
+    }
+
+    @keyframes status-fade-in {
+      0% {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .status.connected {
+      color: #00ff88;
+      background: rgba(0, 255, 136, 0.1);
+      border-color: rgba(0, 255, 136, 0.3);
+    }
+
+    .status.error {
+      color: #ff4757;
+      background: rgba(255, 71, 87, 0.1);
+      border-color: rgba(255, 71, 87, 0.3);
+    }
+
+    /* Loading animation */
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(0, 183, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #00b7ff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .floating {
+      animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-12px); }
+    }
+
+    /* Responsive design */
+    @media (max-width: 480px) {
+      .container {
+        width: 90%;
+        padding: 2.5rem 2rem;
+      }
+      
+      h1 {
+        font-size: 1.8rem;
+      }
+      
+      .logo {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+  <div class="gradient-overlay"></div>
+  
+  <header>
+    <div class="logo">MedBlock</div>
+  </header>
+
+  <div class="container floating">
+    <div class="wallet-icon"></div>
+    <h1>Connect Your Wallet</h1>
+    <p>Securely connect your organization's wallet using MetaMask to access the MedBlock ecosystem.</p>
+    <button id="connectBtn">Connect Wallet</button>
+    <div class="status" id="status">Ready to Connect</div>
+  </div>
+
+  <script>
+    // Create floating particles
+    function createParticles() {
+      const particlesContainer = document.getElementById('particles');
+      const particleCount = 15;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 20 + 's';
+        particle.style.animationDuration = (20 + Math.random() * 10) + 's';
+        particlesContainer.appendChild(particle);
+      }
+    }
+
+    // Initialize particles
+    createParticles();
+
+    const connectBtn = document.getElementById('connectBtn');
+    const statusText = document.getElementById('status');
+
+    async function connectWallet() {
+      if (typeof window.ethereum !== 'undefined') {
+        try {
+          // Show loading state
+          statusText.innerHTML = '<span class="loading"></span>Connecting...';
+          statusText.className = 'status';
+          connectBtn.disabled = true;
+          connectBtn.textContent = 'Connecting...';
+
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          const account = accounts[0];
+          
+          // Success state
+          statusText.textContent = `Connected: ${account.slice(0, 6)}...${account.slice(-4)}`;
+          statusText.className = 'status connected';
+          connectBtn.textContent = 'Connected ✓';
+          
+          // Redirect to Flask route instead of static file
+          setTimeout(() => {
+            window.location.href = "{{ url_for('dashboard') }}";
+          }, 1500);
+        } catch (error) {
+          console.error(error);
+          statusText.textContent = 'Connection Failed - Please try again';
+          statusText.className = 'status error';
+          connectBtn.disabled = false;
+          connectBtn.textContent = 'Retry Connection';
+        }
+      } else {
+        statusText.textContent = 'MetaMask not detected - Please install MetaMask';
+        statusText.className = 'status error';
+      }
+    }
+
+    connectBtn.addEventListener('click', connectWallet);
+
+    // Add some interactive hover effects
+    connectBtn.addEventListener('mouseenter', () => {
+      if (!connectBtn.disabled) {
+        connectBtn.style.transform = 'translateY(-2px) scale(1.02)';
+      }
+    });
+
+    connectBtn.addEventListener('mouseleave', () => {
+      if (!connectBtn.disabled) {
+        connectBtn.style.transform = 'translateY(0) scale(1)';
+      }
+    });
+  </script>
+</body>
+</html>
