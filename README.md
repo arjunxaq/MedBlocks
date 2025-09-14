@@ -3,10 +3,10 @@ A federated Learning + Blockchain solution to synthetically create datasets for 
 
 Steps to Use the product locally (using sepolia Testnet)
 
-Step1: Create a infura api key and note down the rpc net and also create a meta mask account and download the extension
-Step2: Download the org_2.sol file and deploy it in remix ,change the run time to meta mask injector
-Step3: Copy the ABI key and contract address and store it in contract.json file (not uploaded in github)
-Step4: Run the flask api with the command python app.py
+Step1: Create a infura api key and note down the rpc net and also create a meta mask account and download the extension<br>
+Step2: Download the org_2.sol file and deploy it in remix ,change the run time to meta mask injector<br>
+Step3: Copy the ABI key and contract address and store it in contract.json file (not uploaded in github)<br>
+Step4: Run the flask api with the command python app.py<br>
 
 <img width="2832" height="1520" alt="image" src="https://github.com/user-attachments/assets/b77c2723-5b1e-40ae-a00a-8090e3cd9ad6" />
 
